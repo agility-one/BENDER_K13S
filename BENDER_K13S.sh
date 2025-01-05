@@ -96,21 +96,41 @@ list_pods_with_filters() {
   handle_error
 }
 
-# Fonction pour afficher les logs des pods en temps réel
+# Fonction pour afficher les logs des pods en temps réel avec retour au menu
 view_logs() {
-  pod_name=$(read_input "Entrez le nom du pod: ")
-  kubectl logs -f $pod_name | less -S
-  handle_error
+  while true; do
+    pod_name=$(read_input "Entrez le nom du pod: ")
+
+    # Démarrer les logs
+    kubectl logs -f $pod_name | less -S
+    handle_error
+
+    # Lire l'entrée de l'utilisateur après avoir quitté les logs
+    echo "Appuyez sur [Entrée] pour afficher les logs d'un autre pod ou [q] pour retourner au menu principal."
+    read -s -n 1 key
+    if [[ $key = q ]]; then
+      break  # Retourne au menu principal
+    fi
+  done
 }
 
-# Fonction pour redémarrer un pod
+# Fonction pour redémarrer un pod en le supprimant
 restart_pod() {
   pod_name=$(read_input "Entrez le nom du pod: ")
-  kubectl rollout restart pod $pod_name
-  handle_error
+  kubectl get pod $pod_name
+
+  if [ $? -eq 0 ]; then
+    kubectl delete pod $pod_name
+    handle_error
+    echo "Le pod $pod_name a été supprimé."
+    echo "Si le pod fait partie d'un déploiement, il sera recréé automatiquement."
+    echo "Si le pod n'est pas géré par un déploiement, il ne sera pas recréé automatiquement."
+  else
+    echo "Le pod $pod_name n'existe pas ou une erreur est survenue lors de la vérification du pod."
+  fi
 }
 
-# Fonction pour surveiller l'utilisation des ressources des nœuds et des pods
+# Fonction pour surveiller l'utilisation des ressources des nœuds et des pods avec retour au menu
 monitor_resources() {
   while true; do
     clear
@@ -118,47 +138,78 @@ monitor_resources() {
     kubectl top nodes | column -t
     echo "Surveillance des ressources des pods..."
     kubectl top pods --all-namespaces | column -t
-    sleep $INTERVAL
+    
+    echo "Appuyez sur [q] pour retourner au menu principal."
+    read -t $INTERVAL -s -n 1 key
+    if [[ $key = q ]]; then
+      break
+    fi
   done
 }
 
-# Fonction pour décrire un pod spécifique
+# Fonction pour décrire un pod spécifique avec retour au menu
 describe_pod() {
-  pod_name=$(read_input "Entrez le nom du pod: ")
-  kubectl describe pod $pod_name | less -S
-  handle_error
+  while true; do
+    pod_name=$(read_input "Entrez le nom du pod: ")
+    kubectl describe pod $pod_name | less -S
+    handle_error
+    echo "Appuyez sur [Entrée] pour décrire un nouveau pod ou [q] pour retourner au menu principal."
+    read -s -n 1 key
+    if [[ $key = q ]]; then
+      break
+    fi
+  done
 }
 
-# Fonction pour lister les ressources (pods, services, déploiements)
+# Fonction pour lister les ressources (pods, services, déploiements) avec retour au menu
 list_resources() {
-  echo "Options de listing des ressources:"
-  echo "1. Pods"
-  echo "2. Services"
-  echo "3. Déploiements"
-  resource_option=$(read_input "Choisissez une ressource à lister: ")
+  while true; do
+    echo "Options de listing des ressources:"
+    echo "1. Pods"
+    echo "2. Services"
+    echo "3. Déploiements"
+    echo "4. Retour au menu"
+    resource_option=$(read_input "Choisissez une ressource à lister: ")
 
-  case $resource_option in
-    1) kubectl get pods --all-namespaces -o wide | less -S ;;
-    2) kubectl get services --all-namespaces | less -S ;;
-    3) kubectl get deployments --all-namespaces | less -S ;;
-    *) echo "Option de ressource invalide" ;;
-  esac
+    case $resource_option in
+      1) kubectl get pods --all-namespaces -o wide | less -S ;;
+      2) kubectl get services --all-namespaces | less -S ;;
+      3) kubectl get deployments --all-namespaces | less -S ;;
+      4) return ;;
+      *) echo "Option de ressource invalide" ;;
+    esac
 
-  handle_error
+    handle_error
+  done
 }
 
-# Fonction pour décrire un service spécifique
+# Fonction pour décrire un service spécifique avec retour au menu
 describe_service() {
-  service_name=$(read_input "Entrez le nom du service: ")
-  kubectl describe service $service_name | less -S
-  handle_error
+  while true; do
+    namespace=$(read_input "Entrez le nom du namespace: ")
+    service_name=$(read_input "Entrez le nom du service: ")
+    kubectl describe svc $service_name -n $namespace | less -S
+    handle_error
+    echo "Appuyez sur [Entrée] pour décrire un nouveau service ou [q] pour retourner au menu principal."
+    read -s -n 1 key
+    if [[ $key = q ]]; then
+      break
+    fi
+  done
 }
 
-# Fonction pour décrire un déploiement spécifique
+# Fonction pour décrire un déploiement spécifique avec retour au menu
 describe_deployment() {
-  deployment_name=$(read_input "Entrez le nom du déploiement: ")
-  kubectl describe deployment $deployment_name | less -S
-  handle_error
+  while true; do
+    deployment_name=$(read_input "Entrez le nom du déploiement: ")
+    kubectl describe deployment $deployment_name | less -S
+    handle_error
+    echo "Appuyez sur [Entrée] pour décrire un nouveau déploiement ou [q] pour retourner au menu principal."
+    read -s -n 1 key
+    if [[ $key = q ]]; then
+      break
+    fi
+  done
 }
 
 # Fonction pour redémarrer un déploiement
@@ -194,7 +245,7 @@ export_to_json() {
   handle_error
 }
 
-# Fonction pour afficher les métriques de performance des nœuds et des pods
+# Fonction pour afficher les métriques de performance des nœuds et des pods avec retour au menu
 show_performance_metrics() {
   while true; do
     clear
@@ -202,7 +253,12 @@ show_performance_metrics() {
     kubectl top nodes | column -t
     echo "Surveillance des performances des pods:"
     kubectl top pods --all-namespaces | column -t
-    sleep $INTERVAL
+    
+    echo "Appuyez sur [q] pour retourner au menu principal."
+    read -t $INTERVAL -s -n 1 key
+    if [[ $key = q ]]; then
+      break
+    fi
   done
 }
 
