@@ -52,7 +52,7 @@ read_input() {
 
 # Fonction générique pour gérer les erreurs
 handle_error() {
-  if [ $? -ne 0 ]; alors
+  if [ $? -ne 0 ]; then
     local error_message="Une erreur est survenue lors de l'exécution de la commande. Veuillez vérifier votre connexion à Kubernetes."
     echo $error_message
     echo "$(date) - $error_message" >> $LOG_FILE
@@ -65,7 +65,7 @@ retry_command() {
   retry_count=0
   until $command; do
     ((retry_count++))
-    if [ $retry_count -ge $RETRY_LIMIT ]; alors
+    if [ $retry_count -ge $RETRY_LIMIT ]; then
       local error_message="Échec de la connexion après $RETRY_LIMIT tentatives."
       echo $error_message
       echo "$(date) - $error_message" >> $LOG_FILE
@@ -258,7 +258,7 @@ EOF
   option=$(read_input "Choisissez une option: ")
   option=$((option-1))
 
-  if [ $option -ge 0 ] && [ $option -lt ${#menu_options[@]} ]; alors
+  if [ $option -ge 0 ] && [ $option -lt ${#menu_options[@]} ]; then
     retry_command "${menu_functions[$option]}"
   else
     echo "Option invalide"
