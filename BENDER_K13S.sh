@@ -201,8 +201,9 @@ describe_service() {
 # Fonction pour décrire un déploiement spécifique avec retour au menu
 describe_deployment() {
   while true; do
+    namespace=$(read_input "Entrez le nom du namespace: ")
     deployment_name=$(read_input "Entrez le nom du déploiement: ")
-    kubectl describe deployment $deployment_name | less -S
+    kubectl describe deployment $deployment_name -n $namespace | less -S
     handle_error
     echo "Appuyez sur [Entrée] pour décrire un nouveau déploiement ou [q] pour retourner au menu principal."
     read -s -n 1 key
